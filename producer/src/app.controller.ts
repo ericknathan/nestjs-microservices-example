@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { Client, ClientKafka, Transport } from '@nestjs/microservices';
+import { Client, ClientRMQ, Transport } from '@nestjs/microservices';
 import { AppService } from './app.service';
 
 @Controller()
@@ -7,22 +7,16 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Client({
-    transport: Transport.KAFKA,
+    transport: Transport.RMQ,
     options: {
-      client: {
-        brokers: ['localhost:9093'],
-      },
-      consumer: {
-        groupId: 'ec-consumer',
+      urls: ['amqp://localhost:5672'],
+      queue: 'storage-ec',
+      queueOptions: {
+        durable: false,
       },
     },
   })
-  client: ClientKafka;
-
-  async onModuleInit() {
-    this.client.subscribeToResponseOf('storage-ec');
-    await this.client.connect();
-  }
+  client: ClientRMQ;
 
   @Get()
   sendToStorage() {
